@@ -60,6 +60,14 @@ Pass 2 — genuine revisions to the winner:
      and blurs the fridge as the target — the line should roast the
      freezer, not the owner's love life.
 
+Pass 3 — read-back verification:
+  Added verify_written(): after main() writes entry.txt it reads the
+  file back and compares it byte-for-byte with ENTRY + "\n", raising
+  if anything differs. The gate guard checks the line before writing;
+  the read-back checks the write itself, so a truncated, mistyped, or
+  double-written file can never pass silently — the program fails
+  loudly instead of submitting a wrong line.
+
 The chosen line is 108 characters, inside the sealed 1-200 gate.
 """
 
@@ -90,10 +98,21 @@ def entry_path():
     return os.path.join(out_dir, "entry.txt")
 
 
+def verify_written(path):
+    """Read back entry.txt and require it to be exactly ENTRY + newline."""
+    with open(path, encoding="utf-8") as f:
+        contents = f.read()
+    if contents != ENTRY + "\n":
+        raise ValueError("entry.txt mismatch: expected exactly the roast line")
+    return True
+
+
 def main():
     check_gate(ENTRY)
-    with open(entry_path(), "w", encoding="utf-8") as f:
+    path = entry_path()
+    with open(path, "w", encoding="utf-8") as f:
         f.write(ENTRY + "\n")
+    verify_written(path)
 
 
 if __name__ == "__main__":
